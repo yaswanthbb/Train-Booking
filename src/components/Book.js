@@ -40,7 +40,7 @@ export default function Book() {
       return;
     }
 
-  }, [id]);
+  }, [id,navigate]);
 
   const handlePassengerSelect = (p) => {
     if (selectedPassengers.includes(p)) {
