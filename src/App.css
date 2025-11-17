@@ -135,3 +135,25 @@ button{
 Link{
   text-decoration: none;
 }
+
+.flex-payment-cont{
+  display: flex;
+  align-items: center;
+}
+
+.flex-payment-cont button{
+  width: 50px;
+  height: 25px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flex-container{
+  display: flex;
+  align-items: center;
+}
+
+.red {
+  background-color: #C51F26;
+}

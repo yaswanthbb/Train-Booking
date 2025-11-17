@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import trains from "./DummyData";
+import { useNavigate } from "react-router-dom";
 
 export default function TrainSearch() {
-  const [query, setQuery] = useState({ source: "", destination: "" });
+  const [query, setQuery] = useState({ source: "", destination: "", name: "" });
   const [results, setResults] = useState([]);
-
+  const navigate = useNavigate();
   const [selectedTrain, setSelectedTrain] = useState(null);
   const [paymentList, setPaymentList] = useState([]);
   const [chosenPayment, setChosenPayment] = useState("");
@@ -19,20 +20,49 @@ export default function TrainSearch() {
   }, []);
 
   const search = () => {
-    const res = trains.filter(
-      (t) =>
-        t.source.toLowerCase().includes(query.source.toLowerCase()) &&
-        t.destination.toLowerCase().includes(query.destination.toLowerCase())
-    );
-    setResults(res);
-  };
+    const src = query.source.trim();
+    const dest = query.destination.trim();
+    const name = query.name.trim();
 
-  const openPayment = (train) => {
-    if (paymentList.length === 0) {
-      alert("You have no payment methods saved! Add one in Profile.");
+    // At least one field required
+    if (!src && !dest && !name) {
+      alert("❌ Enter source, destination, or train name to search.");
       return;
     }
-    setSelectedTrain(train);
+
+    // Validate alphabetic source/destination
+    if (src && !/^[A-Za-z ]+$/.test(src)) {
+      alert("❌ Source must contain only letters.");
+      return;
+    }
+
+    if (dest && !/^[A-Za-z ]+$/.test(dest)) {
+      alert("❌ Destination must contain only letters.");
+      return;
+    }
+
+    // Prevent same source/destination
+    if (src && dest && src.toLowerCase() === dest.toLowerCase()) {
+      alert("❌ Source and destination cannot be the same.");
+      return;
+    }
+
+    // Validate train name
+    if (name && !/^[A-Za-z ]+$/.test(name)) {
+      alert("❌ Train name must contain only letters.");
+      return;
+    }
+
+    // --- FILTERING LOGIC ---
+    const res = trains.filter((t) => {
+      const sMatch = !src || t.source.toLowerCase().includes(src.toLowerCase());
+      const dMatch =
+        !dest || t.destination.toLowerCase().includes(dest.toLowerCase());
+      const nMatch = !name || t.name.toLowerCase().includes(name.toLowerCase());
+      return sMatch && dMatch && nMatch;
+    });
+
+    setResults(res);
   };
 
   const confirmBooking = () => {
@@ -65,6 +95,10 @@ export default function TrainSearch() {
   return (
     <div className="side-container">
       <h2>Search Trains</h2>
+      <input
+        placeholder="Train Name"
+        onChange={(e) => setQuery({ ...query, name: e.target.value })}
+      />
 
       <input
         placeholder="Source"
@@ -85,7 +119,7 @@ export default function TrainSearch() {
           <p>
             AC Seats: {t.classes.ac} | Sleeper Seats: {t.classes.sleeper}
           </p>
-          <button onClick={() => openPayment(t)}>Book</button>
+          <button onClick={() => navigate(`/book/${t.id}`)}>Book</button>
         </div>
       ))}
       {selectedTrain && (

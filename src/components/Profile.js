@@ -6,10 +6,11 @@ export default function Profile() {
     type: "",
     number: "",
     name: "",
-    upi: ""
+    upi: "",
   });
 
   const [saved, setSaved] = useState([]);
+  const [editingIndex, setEditingIndex] = useState(null);
 
   useEffect(() => {
     const u = JSON.parse(localStorage.getItem("currentUser"));
@@ -21,36 +22,132 @@ export default function Profile() {
 
   const savePayment = () => {
     let all = JSON.parse(localStorage.getItem("paymentMethods")) || {};
+    let userPayments = all[user.email] || [];
 
-    const userPayments = all[user.email] || [];
+    // VALIDATION
+    if (!payment.type) {
+      alert("❌ Please select a payment type.");
+      return;
+    }
 
+    // CARD VALIDATION
+    if (payment.type === "Debit Card" || payment.type === "Credit Card") {
+      if (!payment.name.trim()) {
+        alert("❌ Card holder name cannot be empty.");
+        return;
+      }
+
+      if (!/^[A-Za-z ]+$/.test(payment.name)) {
+        alert("❌ Name must contain only letters.");
+        return;
+      }
+
+      if (!payment.number.trim()) {
+        alert("❌ Card number cannot be empty.");
+        return;
+      }
+
+      if (!/^[0-9]{16}$/.test(payment.number)) {
+        alert("❌ Card number must be exactly 16 digits.");
+        return;
+      }
+
+      if (
+        userPayments.some(
+          (p) => p.number === payment.number && editingIndex === null
+        )
+      ) {
+        alert("❌ This card number already exists.");
+        return;
+      }
+    }
+
+    // UPI VALIDATION
+    if (payment.type === "UPI") {
+      if (!payment.upi.trim()) {
+        alert("❌ UPI ID cannot be empty.");
+        return;
+      }
+
+      if (!payment.upi.includes("@upi.com")) {
+        alert("❌ Invalid UPI format. Must contain '@upi.com'.");
+        return;
+      }
+
+      if (payment.upi.length < 6) {
+        alert("❌ UPI ID is too short.");
+        return;
+      }
+
+      if (
+        userPayments.some((p) => p.upi === payment.upi && editingIndex === null)
+      ) {
+        alert("❌ This UPI ID already exists.");
+        return;
+      }
+    }
+
+    // Create entry for saving
     const entry =
       payment.type === "UPI"
         ? { type: "UPI", upi: payment.upi }
         : { type: payment.type, name: payment.name, number: payment.number };
 
-    const updated = [...userPayments, entry];
+    // Update or Add
+    if (editingIndex !== null) {
+      userPayments[editingIndex] = entry;
+      alert("Payment method updated!");
+      setEditingIndex(null);
+    } else {
+      userPayments.push(entry);
+      alert("Payment method saved!");
+    }
 
-    all[user.email] = updated;
+    all[user.email] = userPayments;
     localStorage.setItem("paymentMethods", JSON.stringify(all));
+    setSaved([...userPayments]);
 
-    setSaved(updated);
-    alert("Payment method saved!");
+    // Reset form
     setPayment({ type: "", number: "", name: "", upi: "" });
   };
 
-  return (
-    <div className="side-container">
-      <h2>Your Profile</h2>
+  const handleEdit = (index) => {
+    const p = saved[index];
+    setEditingIndex(index);
 
-      <p><b>Email:</b> {user.email}</p>
+    if (p.type === "UPI") {
+      setPayment({
+        type: "UPI",
+        upi: p.upi,
+        name: "",
+        number: "",
+      });
+    } else {
+      setPayment({
+        type: p.type,
+        name: p.name,
+        number: p.number,
+        upi: "",
+      });
+    }
+  };
+
+  return (
+    <div>
+      <div className="side-container">
+      <h2>Your Profile</h2>
+      <p>
+        <b>Email:</b> {user.email}
+      </p>
 
       <hr />
 
-      <h3>Add Payment Method</h3>
+      <h3>
+        {editingIndex !== null ? "Edit Payment Method" : "Add Payment Method"}
+      </h3>
 
       <select
-      className="payment-input"
+        className="payment-input"
         onChange={(e) => setPayment({ ...payment, type: e.target.value })}
         value={payment.type}
       >
@@ -59,28 +156,35 @@ export default function Profile() {
         <option value="Credit Card">Credit Card</option>
         <option value="UPI">UPI</option>
       </select>
-      {payment.type === "Debit Card" || payment.type === "Credit Card" ? (
+
+      {(payment.type === "Debit Card" || payment.type === "Credit Card") && (
         <div className="payment-input-container">
           <input
             placeholder="Card Holder Name"
+            value={payment.name}
             onChange={(e) => setPayment({ ...payment, name: e.target.value })}
           />
 
           <input
             placeholder="Card Number"
             maxLength={16}
+            value={payment.number}
             onChange={(e) => setPayment({ ...payment, number: e.target.value })}
           />
         </div>
-      ) : null}
-      {payment.type === "UPI" ? (
+      )}
+
+      {payment.type === "UPI" && (
         <input
           placeholder="UPI ID (example: username@upi)"
+          value={payment.upi}
           onChange={(e) => setPayment({ ...payment, upi: e.target.value })}
         />
-      ) : null}
+      )}
 
-      <button className="payment-button" onClick={savePayment}>Save Method</button>
+      <button className="payment-button" onClick={savePayment}>
+        {editingIndex !== null ? "Update Method" : "Save Method"}
+      </button>
 
       <hr />
 
@@ -91,16 +195,30 @@ export default function Profile() {
       {saved.map((p, i) => (
         <div className="card" key={i}>
           <b>{p.type}</b>
+
           {p.type === "UPI" ? (
-            <p>UPI ID: {p.upi}</p>
+            <div className="flex-payment-cont">
+              <p>UPI ID: {p.upi}</p>
+              <button className="payment-button" onClick={() => handleEdit(i)}>
+                Edit
+              </button>
+            </div>
           ) : (
-            <>
-              <p>Name: {p.name}</p>
-              <p>Card No: **** **** **** {p.number.slice(-4)}</p>
-            </>
+            <div className="flex-payment-cont">
+              <div>
+                <p>Name: {p.name}</p>
+                <p>Card No: **** **** **** {p.number.slice(-4)}</p>
+              </div>
+
+              <button className="payment-button" onClick={() => handleEdit(i)}>
+                Edit
+              </button>
+            </div>
           )}
         </div>
       ))}
     </div>
+    </div>
+    
   );
 }

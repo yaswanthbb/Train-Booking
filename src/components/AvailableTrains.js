@@ -1,6 +1,9 @@
 import trains from "./DummyData";
+import { useNavigate } from "react-router-dom";
+
 
 export default function AvailableTrains() {
+  const navigate = useNavigate();
   return (
     <div className="side-container">
       <h2>All Available Trains</h2>
@@ -18,6 +21,7 @@ export default function AvailableTrains() {
             <b>AC Seats:</b> {t.classes.ac} | <b>Sleeper Seats:</b>{" "}
             {t.classes.sleeper}
           </p>
+          <button onClick={() => navigate(`/book/${t.id}`)}>Book</button>
         </div>
       ))}
     </div>
