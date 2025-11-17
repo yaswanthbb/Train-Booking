@@ -14,10 +14,7 @@ import Book from "./components/Book";
 
 export default function App() {
   useEffect(() => {
-    // Check if admins list exists in localStorage
     const admins = JSON.parse(localStorage.getItem("admins"));
-
-    // If NO admin exists, create a default admin
     if (!admins) {
       localStorage.setItem(
         "admins",
