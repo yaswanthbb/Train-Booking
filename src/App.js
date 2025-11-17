@@ -1,25 +1,29 @@
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-function App() {
+import NavBar from "./components/NavBar";
+import Auth from "./components/Auth";
+import Home from "./components/Home";
+import Profile from "./components/Profile";
+import Passengers from "./components/Passengers";
+import TrainSearch from "./components/TrainSearch";
+import AvailableTrains from "./components/AvailableTrains";
+import Bookings from "./components/Bookings";
+import AdminTrain from "./components/AdminTrain";
+
+export default function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter>
+      <NavBar />
+      <Routes>
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/passengers" element={<Passengers />} />
+        <Route path="/search" element={<TrainSearch />} />
+        <Route path="/available" element={<AvailableTrains />} />
+        <Route path="/bookings" element={<Bookings />} />
+        <Route path="/admin" element={<AdminTrain />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
-
-export default App;
